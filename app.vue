@@ -1,53 +1,57 @@
 <template>
   <div>
-    <video ref="videoRef" autoplay></video>
-    <canvas ref="canvasRef" style="display: none;"></canvas>
-    <button @click="captureAndProcessImage">Do magic</button>
+    <canvas ref="canvasRef" @click="getPixelColor" style="display: block; width: 100%; max-width: 600px; height: auto;"></canvas>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 
-const videoRef = ref(null);
 const canvasRef = ref(null);
+let imageRef;
 
-const constraints = {
-  video: {
-    width: { ideal: 1920 }, 
-    height: { ideal: 1080 } 
-  }
-};
-
-onMounted(async () => {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    videoRef.value.srcObject = stream;
-  } catch (error) {
-    console.error('error:', error);
+onMounted(() => {
+  // Ensure code runs only in the browser
+  if (typeof window !== 'undefined') {
+    imageRef = new Image();  // Initialize the Image object in the client-side
+    imageRef.onload = () => drawImage();  // Set up the onload handler
+    imageRef.src = '/hellsgate.jpg';  // Set the image source
   }
 });
 
-const captureAndProcessImage = () => {
-  const video = videoRef.value;
+const loadImageOnCanvas = () => {
+  if (typeof window !== 'undefined' && imageRef) {
+    drawImage();  // Draw the image when the button is clicked
+  }
+};
+
+const drawImage = () => {
   const canvas = canvasRef.value;
-  const context = canvas.getContext('2d');
+  if (canvas && imageRef) {
+    const context = canvas.getContext('2d');
+    canvas.width = imageRef.width;
+    canvas.height = imageRef.height;
+    context.drawImage(imageRef, 0, 0);
+  }
+};
 
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-
-  context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-
-  alert(`dimensions: ${imageData.width}x${imageData.height}`);
+const getPixelColor = (event) => {
+  const canvas = canvasRef.value;
+  if (canvas) {
+    const context = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.floor((event.clientX - rect.left) * (canvas.width / rect.width));
+    const y = Math.floor((event.clientY - rect.top) * (canvas.height / rect.height));
+    const imageData = context.getImageData(x, y, 1, 1).data;
+    alert(`RGBA at (${x},${y}): ${imageData[0]}, ${imageData[1]}, ${imageData[2]}, ${imageData[3]}`);
+  }
 };
 </script>
 
 <style scoped>
-video {
-  width: 100%;
-  height: auto; 
+canvas {
+  max-width: 100%; /* Ensures the canvas is responsive but maintains the image's aspect ratio */
+  display: block;
+  height: auto;
 }
 </style>
-
