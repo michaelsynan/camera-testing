@@ -12,12 +12,19 @@ import { ref, onMounted } from 'vue';
 const videoRef = ref(null);
 const canvasRef = ref(null);
 
+const constraints = {
+  video: {
+    width: { ideal: 1920 }, 
+    height: { ideal: 1080 } 
+  }
+};
+
 onMounted(async () => {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
     videoRef.value.srcObject = stream;
   } catch (error) {
-    console.error('Error accessing the camera:', error);
+    console.error('error:', error);
   }
 });
 
@@ -33,7 +40,7 @@ const captureAndProcessImage = () => {
 
   const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
 
-  console.log(imageData);
+  alert(`dimensions: ${imageData.width}x${imageData.height}`);
 };
 </script>
 
@@ -43,3 +50,4 @@ video {
   height: auto; 
 }
 </style>
+
